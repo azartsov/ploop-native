@@ -1,20 +1,22 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PloopGameScreen } from "./src/screens/PloopGameScreen";
+import { SplashScreen } from "./src/screens/SplashScreen";
+import type { Language } from "./src/i18n/strings";
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [language, setLanguage] = useState<Language>("ru");
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      {showSplash ? (
+        <SplashScreen language={language} onFinish={() => setShowSplash(false)} />
+      ) : (
+        <PloopGameScreen language={language} onToggleLanguage={() => setLanguage((current) => (current === "ru" ? "en" : "ru"))} />
+      )}
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

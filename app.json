@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "ploop-native",
+    "name": "Ploop",
     "slug": "ploop-native",
+    "description": "A calm bubble-popping puzzle with satisfying chain reactions.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,10 +17,27 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.azartsov.ploopnative"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-status-bar"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a4a7fe99-8ddb-41c0-b9ff-14b99badf3eb"
+      }
+    },
+    "owner": "azartsov"
   }
 }

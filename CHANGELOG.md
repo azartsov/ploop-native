@@ -4,6 +4,12 @@ All notable project-level updates for Ploop are recorded here.
 
 ## 2026-10-03
 
+### Changed
+- Reduced Android EAS artifact size with arm64-only preview and production builds, R8 minification, unused-resource shrinking, and compressed native library packaging.
+- Removed unused audio assets from the app bundle.
+
+## 2026-10-03
+
 ### Added
 - Initial Expo / React Native Ploop puzzle game.
 - Ten-by-ten bubble board with chain reactions, rainbow bubbles, gravity, diagonal rolling, undo, and shuffle.

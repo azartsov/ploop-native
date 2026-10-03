@@ -64,11 +64,14 @@ EAS_NO_VCS=1 npx eas-cli@latest build --platform android --profile preview
 
 The project uses EAS project ID `a4a7fe99-8ddb-41c0-b9ff-14b99badf3eb`. Preview builds are intended for direct Android installation and are not submitted to an app store.
 
+Preview and production EAS builds target `arm64-v8a` devices only to keep artifacts small. This supports current Android phones and the configured ARM emulator, but not `x86_64` emulators or older 32-bit Android devices. Local builds keep all standard Android architectures unless `PLOOP_ANDROID_ABIS` is set.
+
 ## Project Notes
 
 - The app has no backend, analytics, ads, or in-app purchases.
 - Only leaderboard records are persisted locally in AsyncStorage.
 - `assets/audio/ploop.m4a` is currently Opus audio in an `.m4a` container. It works on Android; encode it as AAC before releasing an iOS build.
+- Release Android builds enable R8 minification, unused-resource shrinking, and compressed native library packaging through `expo-build-properties`.
 - Generated `android/` and `ios/` folders are intentionally ignored because Expo Continuous Native Generation creates them when needed.
 
 ## Changelog

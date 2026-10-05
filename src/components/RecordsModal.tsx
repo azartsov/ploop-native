@@ -6,11 +6,12 @@ import { RecordsTable } from "./RecordsTable";
 type RecordsModalProps = {
   visible: boolean;
   records: RecordEntry[];
+  now: number;
   strings: Strings;
   onClose: () => void;
 };
 
-export function RecordsModal({ visible, records, strings, onClose }: RecordsModalProps) {
+export function RecordsModal({ visible, records, now, strings, onClose }: RecordsModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <Pressable accessibilityLabel={strings.close} onPress={onClose} style={styles.backdrop}>
@@ -19,7 +20,7 @@ export function RecordsModal({ visible, records, strings, onClose }: RecordsModa
             <Text style={styles.title}>{strings.recordsTitle}</Text>
             <Text style={styles.hint}>{strings.recordsHint}</Text>
           </View>
-          <RecordsTable records={records} highlightId={null} strings={strings} />
+          <RecordsTable records={records} highlightId={null} now={now} strings={strings} />
           <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeText}>{strings.close}</Text>
           </Pressable>

@@ -1,7 +1,7 @@
 import { applyGravity, applyRainbowRules, findBottomSinglesToAutoClear, findChain, findGroup, findRollTarget, generateBoard, generateBoardForField, isWin, popCells } from "../engine";
 import { DEFAULT_COLOR_COUNT, type Board } from "../types";
 
-function createBoard(colors: Array<Array<number | "rainbow" | "stone" | null>>): Board {
+function createBoard(colors: (number | "rainbow" | "stone" | null)[][]): Board {
   return colors.map((row, rowIndex) =>
     row.map((color, col) => ({
       id: `bubble-${rowIndex}-${col}`,
@@ -15,7 +15,7 @@ function createBoard(colors: Array<Array<number | "rainbow" | "stone" | null>>):
 function countConnectedGroups(board: ReturnType<typeof generateBoard>): number {
   const visited = new Set<string>();
   let groups = 0;
-  const offsets: ReadonlyArray<readonly [number, number]> = [
+  const offsets: (readonly [number, number])[] = [
     [-1, 0],
     [1, 0],
     [0, -1],

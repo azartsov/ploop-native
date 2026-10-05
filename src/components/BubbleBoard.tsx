@@ -73,7 +73,7 @@ export function BubbleBoard({
           pointerEvents="none"
           style={{ position: "absolute", left: BOARD_PADDING + effect.col * step, top: BOARD_PADDING + effect.row * step, width: bubbleSize, height: bubbleSize }}
         >
-          <PopEffect color={effect.color} size={bubbleSize} />
+          <PopEffect color={effect.color} size={bubbleSize} particles={effect.particles} />
         </View>
       ))}
       {scorePopups.map((popup) => {

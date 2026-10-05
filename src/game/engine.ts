@@ -24,7 +24,7 @@ function isInsideBoard(board: Board, row: number, col: number): boolean {
 }
 
 function getNeighbors(board: Board, position: Position): Position[] {
-  const offsets: ReadonlyArray<readonly [number, number]> = [
+  const offsets: (readonly [number, number])[] = [
     [-1, 0],
     [1, 0],
     [0, -1],

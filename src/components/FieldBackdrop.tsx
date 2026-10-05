@@ -62,7 +62,7 @@ function Pattern({ theme, width, height }: { theme: FieldTheme; width: number; h
     );
   }
 
-  const sprinkles: Array<[number, number, number, number, number]> = [
+  const sprinkles: [number, number, number, number, number][] = [
     [0.04, 0.245, 30, 7, -25], [0.16, 0.28, 17, 6, 30], [0.78, 0.25, 34, 7, 18],
     [0.91, 0.285, 23, 6, -38], [0.06, 0.71, 25, 6, 45], [0.84, 0.735, 32, 7, -15],
     [0.28, 0.76, 21, 6, 20], [0.68, 0.24, 28, 6, -32], [0.48, 0.29, 15, 5, 55],

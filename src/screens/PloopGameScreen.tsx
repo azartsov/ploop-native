@@ -2,7 +2,7 @@ import { useAudioPlayer, type AudioPlayer } from "expo-audio";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View, Vibration } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BLOOP_IN_GAME_AUDIO, BUBBLE_POP_AUDIO, ROLL_RUSTLE_AUDIO } from "../assets/audio";
+import { BLOOP_IN_GAME_AUDIO, ROLL_RUSTLE_AUDIO } from "../assets/audio";
 import { applyGravity, findBottomSinglesToAutoClear, findGroup, generateBoardForField, isWin, popCells } from "../game/engine";
 import { addRecord, type RecordEntry } from "../game/records";
 import { loadRecords, saveRecords } from "../game/save";
@@ -13,7 +13,7 @@ import { HOLD_DURATION_MS, type BubbleHighlight } from "../components/Bubble";
 import { FieldBackdrop } from "../components/FieldBackdrop";
 import { HelpModal } from "../components/HelpModal";
 import { MusicButton } from "../components/MusicButton";
-import { POP_BURST_MS, POP_GROW_MS, type PopEffectData } from "../components/PopEffect";
+import { createPopEffectParticles, POP_BURST_MS, POP_GROW_MS, type PopEffectData } from "../components/PopEffect";
 import { PloopLogo } from "../components/PloopLogo";
 import { RecordsButton } from "../components/RecordsButton";
 import { RecordsModal } from "../components/RecordsModal";
@@ -107,6 +107,7 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
   const [helpVisible, setHelpVisible] = useState(false);
   const [records, setRecords] = useState<RecordEntry[]>([]);
   const [recordsVisible, setRecordsVisible] = useState(false);
+  const [recordsNow, setRecordsNow] = useState(0);
   const [seriesResult, setSeriesResult] = useState<SeriesResult | null>(null);
   const [movementById, setMovementById] = useState<Movements>({});
   const [popEffects, setPopEffects] = useState<PopEffectData[]>([]);
@@ -344,7 +345,7 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
       return;
     }
 
-    const effect: PopEffectData = { id: `pop-${popEffectSequence.current++}`, row: cell.row, col: cell.col, color: cell.color };
+    const effect: PopEffectData = { id: `pop-${popEffectSequence.current++}`, row: cell.row, col: cell.col, color: cell.color, particles: createPopEffectParticles() };
 
     setPopEffects((current) => [...current, effect]);
     setTimeout(() => setPopEffects((current) => current.filter((item) => item.id !== effect.id)), POP_EFFECT_LIFETIME_MS);
@@ -355,6 +356,11 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
       pendingPopSounds.current.push(index);
       void playPendingPopSounds();
     }, POP_GROW_MS);
+  }
+
+  function openRecords() {
+    setRecordsNow(Date.now());
+    setRecordsVisible(true);
   }
 
   function spawnScorePopups(cells: Cell[], move: MoveScore) {
@@ -526,7 +532,7 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
           </Pressable>
           <MusicButton enabled={musicEnabled} label={musicEnabled ? strings.musicOff : strings.musicOn} onToggle={() => setMusicEnabled((current) => !current)} />
           <SoundButton enabled={soundEnabled} label={soundEnabled ? strings.soundOff : strings.soundOn} onToggle={() => setSoundEnabled((current) => !current)} />
-          <RecordsButton label={strings.openRecords} onPress={() => setRecordsVisible(true)} />
+          <RecordsButton label={strings.openRecords} onPress={openRecords} />
           <Pressable accessibilityRole="button" accessibilityLabel={strings.switchLanguage} onPress={onToggleLanguage} style={styles.languageButton}>
             <Text style={styles.languageText}>{language.toUpperCase()}</Text>
           </Pressable>
@@ -628,6 +634,7 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
             <RecordsTable
               records={records}
               highlightId={seriesResult.recordId}
+              now={seriesResult.record.playedAt}
               currentResult={{ record: seriesResult.record, allTimeRank: seriesResult.allTimeRank, monthRank: seriesResult.monthRank }}
               strings={strings}
             />
@@ -638,7 +645,7 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
         </View>
       ) : null}
 
-      <RecordsModal visible={recordsVisible} records={records} strings={strings} onClose={() => setRecordsVisible(false)} />
+      <RecordsModal visible={recordsVisible} records={records} now={recordsNow} strings={strings} onClose={() => setRecordsVisible(false)} />
       <HelpModal visible={helpVisible} strings={strings} onClose={() => setHelpVisible(false)} />
     </SafeAreaView>
   );

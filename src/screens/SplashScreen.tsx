@@ -1,6 +1,6 @@
 import { useAudioPlayer } from "expo-audio";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SPLASH_MUSIC_AUDIO } from "../assets/audio";
 import { BubbleBoard } from "../components/BubbleBoard";
@@ -58,7 +58,7 @@ export function SplashScreen({ language, onFinish }: SplashScreenProps) {
           </Animated.View>
         </View>
         <Animated.Text style={[styles.hint, { opacity: contentOpacity }]}>{strings.tapToStart}</Animated.Text>
-        <Animated.Text style={[styles.slogan, { opacity: contentOpacity }]}>Don't panic! Pop and keep calm</Animated.Text>
+        <Animated.Text style={[styles.slogan, { opacity: contentOpacity }]}>Don&apos;t panic! Pop and keep calm</Animated.Text>
       </SafeAreaView>
     </Pressable>
   );

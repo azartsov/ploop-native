@@ -6,6 +6,7 @@ import { ScoreCounter } from "./ScoreCounter";
 type RecordsTableProps = {
   records: RecordEntry[];
   highlightId: string | null;
+  now: number;
   currentResult?: {
     record: RecordEntry;
     allTimeRank: number;
@@ -53,8 +54,8 @@ function RecordsList({ title, records, highlightId, currentRecord, currentRank, 
   );
 }
 
-export function RecordsTable({ records, highlightId, currentResult, strings }: RecordsTableProps) {
-  const lists = getRecordLists(records, Date.now());
+export function RecordsTable({ records, highlightId, now, currentResult, strings }: RecordsTableProps) {
+  const lists = getRecordLists(records, now);
 
   return (
     <View style={styles.table}>

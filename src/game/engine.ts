@@ -5,6 +5,7 @@ import {
   DEFAULT_RAINBOW_CHANCE,
   type Board,
   type Cell,
+  type GroupMember,
 } from "./types";
 
 const MIN_CONNECTED_GROUPS = 15;
@@ -35,8 +36,8 @@ function getNeighbors(board: Board, position: Position): Position[] {
     .filter((neighbor) => isInsideBoard(board, neighbor.row, neighbor.col));
 }
 
-function createBoard(rows: number, cols: number, colorCount: number, rainbowChance: number): Board {
-  return Array.from({ length: rows }, (_, row) =>
+function createBoard(rows: number, cols: number, colorCount: number, rainbowChance: number, stoneCount: number): Board {
+  const board: Board = Array.from({ length: rows }, (_, row) =>
     Array.from({ length: cols }, (_, col) => {
       const color = Math.random() < rainbowChance ? "rainbow" : Math.floor(Math.random() * colorCount);
 
@@ -48,6 +49,20 @@ function createBoard(rows: number, cols: number, colorCount: number, rainbowChan
       };
     }),
   );
+
+  const stonePositions = new Set<number>();
+
+  while (stonePositions.size < stoneCount) {
+    stonePositions.add(Math.floor(Math.random() * rows * cols));
+  }
+
+  for (const position of stonePositions) {
+    const row = Math.floor(position / cols);
+    const col = position % cols;
+    board[row][col].color = "stone";
+  }
+
+  return board;
 }
 
 function countConnectedGroups(board: Board): number {
@@ -173,14 +188,48 @@ export function applyRainbowRules(board: Board, chain: Cell[]): Cell[] {
   return resolved;
 }
 
-export function findRainbowBurst(board: Board, row: number, col: number): Cell[] {
-  const rainbow = board[row]?.[col];
+// Группа, которая лопается одним нажатием, в порядке волны от нажатой клетки.
+export function findGroup(board: Board, row: number, col: number): GroupMember[] {
+  const start = board[row]?.[col];
 
-  if (!rainbow || rainbow.color !== "rainbow") {
+  if (!start || start.color === null || start.color === "stone") {
     return [];
   }
 
-  return [rainbow, ...getNeighbors(board, { row, col }).map((position) => board[position.row][position.col]).filter((cell) => cell.color !== null)];
+  const group = start.color === "rainbow" ? [start] : applyRainbowRules(board, findChain(board, row, col));
+  const groupById = new Map(group.map((cell) => [cell.id, cell]));
+  const ordered: GroupMember[] = [{ cell: start, depth: 0 }];
+  const visited = new Set([start.id]);
+
+  // ordered служит очередью обхода в ширину.
+  for (let index = 0; index < ordered.length; index += 1) {
+    const { cell, depth } = ordered[index];
+
+    for (const neighbor of getNeighbors(board, cell)) {
+      const next = board[neighbor.row][neighbor.col];
+
+      if (groupById.has(next.id) && !visited.has(next.id)) {
+        visited.add(next.id);
+        ordered.push({ cell: next, depth: depth + 1 });
+      }
+    }
+  }
+
+  return ordered;
+}
+
+export function findBottomSinglesToAutoClear(board: Board): Cell[] | null {
+  const remainingBalls = board.flat().filter((cell) => typeof cell.color === "number" || cell.color === "rainbow");
+
+  if (remainingBalls.length === 0 || remainingBalls.some((cell) => cell.row !== board.length - 1)) {
+    return null;
+  }
+
+  if (remainingBalls.some((cell) => findGroup(board, cell.row, cell.col).length > 1)) {
+    return null;
+  }
+
+  return remainingBalls;
 }
 
 export function popCells(board: Board, cells: Cell[]): Board {
@@ -189,7 +238,7 @@ export function popCells(board: Board, cells: Cell[]): Board {
   return board.map((row) =>
     row.map((cell) => ({
       ...cell,
-      color: poppedIds.has(cell.id) ? null : cell.color,
+      color: poppedIds.has(cell.id) && cell.color !== "stone" ? null : cell.color,
     })),
   );
 }
@@ -237,7 +286,7 @@ export function findRollTarget(board: Board, row: number, col: number): Position
   const cell = board[row]?.[col];
   const targetRow = row + 1;
 
-  if (!cell || cell.color === null || targetRow >= board.length) {
+  if (!cell || cell.color === null || cell.color === "stone" || targetRow >= board.length) {
     return null;
   }
 
@@ -291,38 +340,9 @@ export function applyGravity(board: Board): Board {
   return rollIntoPits(applyVerticalGravity(board));
 }
 
-let shuffleSequence = 0;
-
-export function shuffleBoard(board: Board): Board {
-  const colors = board.flat().map((cell) => cell.color);
-
-  for (let index = colors.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    const color = colors[index];
-    colors[index] = colors[swapIndex];
-    colors[swapIndex] = color;
-  }
-
-  const shuffledBoard = board.map((row, rowIndex) =>
-    row.map((cell, col) => {
-      const color = colors[rowIndex * row.length + col];
-      // Id «empty-…» принадлежит пустым клеткам, которые гравитация создаёт заново.
-      const id = color !== null && cell.id.startsWith("empty-") ? `bubble-shuffled-${shuffleSequence++}` : cell.id;
-
-      return { ...cell, id, color };
-    }),
-  );
-
-  return applyGravity(shuffledBoard);
-}
-
-// Уровень пройден, когда все оставшиеся шарики лежат только на нижней линии.
+// Поле пройдено, когда лопнули все шарики: одиночки тоже можно лопать.
 export function isWin(board: Board): boolean {
-  return board.slice(0, -1).every((row) => row.every((cell) => cell.color === null));
-}
-
-export function isStuck(board: Board): boolean {
-  return board.every((row) => row.every((cell) => typeof cell.color !== "number" || findChain(board, cell.row, cell.col).length < 2));
+  return board.every((row) => row.every((cell) => cell.color === null || cell.color === "stone"));
 }
 
 export function generateBoard(
@@ -330,6 +350,7 @@ export function generateBoard(
   cols = DEFAULT_BOARD_COLS,
   colorCount = DEFAULT_COLOR_COUNT,
   rainbowChance = DEFAULT_RAINBOW_CHANCE,
+  stoneCount = 0,
 ): Board {
   if (!isPositiveInteger(rows) || !isPositiveInteger(cols) || !isPositiveInteger(colorCount)) {
     throw new Error("Размер поля и количество цветов должны быть положительными целыми числами.");
@@ -339,16 +360,26 @@ export function generateBoard(
     throw new Error("Вероятность радужного пузыря должна быть в диапазоне от 0 до 1.");
   }
 
+  if (!Number.isInteger(stoneCount) || stoneCount < 0 || stoneCount >= rows * cols) {
+    throw new Error("Количество камней должно быть неотрицательным целым числом меньше размера поля.");
+  }
+
   if (rows * cols < MIN_CONNECTED_GROUPS * 2) {
     throw new Error("На поле недостаточно клеток для гарантии минимального количества групп.");
   }
 
   // Поле принимается только после выполнения условия стартового уровня.
   while (true) {
-    const board = createBoard(rows, cols, colorCount, rainbowChance);
+    const board = createBoard(rows, cols, colorCount, rainbowChance, stoneCount);
 
     if (countConnectedGroups(board) >= MIN_CONNECTED_GROUPS) {
       return board;
     }
   }
+}
+
+export function generateBoardForField(fieldNumber: number): Board {
+  const stoneCount = Math.max(0, Math.min(3, Math.floor(fieldNumber) - 2));
+
+  return generateBoard(DEFAULT_BOARD_ROWS, DEFAULT_BOARD_COLS, DEFAULT_COLOR_COUNT, DEFAULT_RAINBOW_CHANCE, stoneCount);
 }

@@ -1,7 +1,7 @@
-import { applyGravity, applyRainbowRules, findChain, findRainbowBurst, findRollTarget, generateBoard, isStuck, isWin, popCells, shuffleBoard } from "../engine";
-import type { Board } from "../types";
+import { applyGravity, applyRainbowRules, findBottomSinglesToAutoClear, findChain, findGroup, findRollTarget, generateBoard, generateBoardForField, isWin, popCells } from "../engine";
+import { DEFAULT_COLOR_COUNT, type Board } from "../types";
 
-function createBoard(colors: Array<Array<number | "rainbow" | null>>): Board {
+function createBoard(colors: Array<Array<number | "rainbow" | "stone" | null>>): Board {
   return colors.map((row, rowIndex) =>
     row.map((color, col) => ({
       id: `bubble-${rowIndex}-${col}`,
@@ -74,11 +74,11 @@ describe("generateBoard", () => {
     );
   });
 
-  it("использует только допустимые цвета", () => {
+  it("использует только пять обычных цветов и радужные пузыри", () => {
     const board = generateBoard();
 
     for (const cell of board.flat()) {
-      expect(typeof cell.color === "number" ? cell.color >= 0 && cell.color < 7 : cell.color).toBeTruthy();
+      expect(typeof cell.color === "number" ? cell.color >= 0 && cell.color < DEFAULT_COLOR_COUNT : cell.color === "rainbow").toBeTruthy();
     }
   });
 
@@ -107,13 +107,62 @@ describe("игровые правила", () => {
     expect(applyRainbowRules(board, chain).map((cell) => cell.id)).toEqual(["bubble-0-0", "bubble-0-1", "bubble-0-2"]);
   });
 
-  it("лопает радужный пузырь и его соседей при прямом удержании", () => {
+  it("при прямом удержании лопает только радужный пузырь", () => {
     const board = createBoard([
       [1, "rainbow", 2],
       [3, 4, 5],
     ]);
 
-    expect(findRainbowBurst(board, 0, 1).map((cell) => cell.id)).toEqual(["bubble-0-1", "bubble-1-1", "bubble-0-0", "bubble-0-2"]);
+    expect(findGroup(board, 0, 1)).toEqual([{ cell: board[0][1], depth: 0 }]);
+  });
+
+  it("не даёт выбрать или скатить камень вбок, но пропускает его вниз по колонке", () => {
+    const board = createBoard([
+      [null, null],
+      ["stone", null],
+      [null, 2],
+      [null, null],
+    ]);
+
+    expect(findGroup(board, 1, 0)).toEqual([]);
+    expect(findRollTarget(board, 1, 0)).toBeNull();
+
+    const fallenBoard = applyGravity(board);
+
+    expect(fallenBoard[3][0].color).toBe("stone");
+    expect(fallenBoard[3][1].color).toBe(2);
+  });
+
+  it("считает поле пройденным, когда на нём остались только камни", () => {
+    expect(isWin(createBoard([["stone", null]]))).toBe(true);
+  });
+
+  it("создаёт по одному камню на третьем поле и добавляет по одному до пятого", () => {
+    for (const [fieldNumber, expectedStoneCount] of [[1, 0], [2, 0], [3, 1], [4, 2], [5, 3]]) {
+      const board = generateBoardForField(fieldNumber);
+
+      expect(board.flat().filter((cell) => cell.color === "stone")).toHaveLength(expectedStoneCount);
+    }
+  });
+
+  it("автоматически выделяет одиночные шары в нижней строке, игнорируя камни", () => {
+    const board = createBoard([
+      ["stone", null, null],
+      [null, 1, 2],
+    ]);
+
+    expect(findBottomSinglesToAutoClear(board)?.map((cell) => cell.color)).toEqual([1, 2]);
+  });
+
+  it("не включает автоматическое завершение, если остались верхние шары или группа", () => {
+    const upperBall = createBoard([
+      [1, null],
+      [null, 2],
+    ]);
+    const groupedBalls = createBoard([[1, 1]]);
+
+    expect(findBottomSinglesToAutoClear(upperBall)).toBeNull();
+    expect(findBottomSinglesToAutoClear(groupedBalls)).toBeNull();
   });
 
   it("лопает клетки, опускает оставшиеся и определяет завершение", () => {
@@ -127,13 +176,48 @@ describe("игровые правила", () => {
 
     expect(fallenBoard.map((row) => row[0].color)).toEqual([null, null, 3]);
     expect(isWin(poppedBoard)).toBe(false);
-    expect(isStuck(createBoard([[1, null], [null, 2]]))).toBe(true);
   });
 
-  it("засчитывает победу, когда шарики остались только на нижней линии", () => {
-    expect(isWin(createBoard([[null, null, null], [null, null, null], [1, 2, 3]]))).toBe(true);
-    expect(isWin(createBoard([[null, null, null], [null, 1, null], [1, 2, 3]]))).toBe(false);
+  it("засчитывает победу только когда поле полностью пустое", () => {
     expect(isWin(createBoard([[null, null], [null, null]]))).toBe(true);
+    expect(isWin(createBoard([[null, null, null], [null, null, null], [1, 2, 3]]))).toBe(false);
+    expect(isWin(createBoard([[null, null], [null, 1]]))).toBe(false);
+  });
+
+  it("находит одиночный шарик как группу из одной клетки", () => {
+    const board = createBoard([
+      [1, 2],
+      [3, 4],
+    ]);
+
+    expect(findGroup(board, 0, 0)).toEqual([{ cell: board[0][0], depth: 0 }]);
+    expect(findGroup(createBoard([[null]]), 0, 0)).toEqual([]);
+  });
+
+  it("упорядочивает группу по расстоянию от нажатой клетки", () => {
+    const board = createBoard([[1, 1, 1, 1, 2]]);
+    const group = findGroup(board, 0, 1);
+
+    expect(group.map((member) => [member.cell.id, member.depth])).toEqual([
+      ["bubble-0-1", 0],
+      ["bubble-0-0", 1],
+      ["bubble-0-2", 1],
+      ["bubble-0-3", 2],
+    ]);
+  });
+
+  it("включает радужный мост в группу и одиночку рядом с радугой", () => {
+    const board = createBoard([[1, "rainbow", 1, 2]]);
+
+    expect(findGroup(board, 0, 0).map((member) => member.cell.id)).toEqual(["bubble-0-0", "bubble-0-1", "bubble-0-2"]);
+    expect(findGroup(board, 0, 3).map((member) => member.cell.id)).toEqual(["bubble-0-3"]);
+  });
+
+  it("отделяет радужный шар от соседей при прямом нажатии", () => {
+    const board = createBoard([[1, "rainbow", 2]]);
+    const group = findGroup(board, 0, 1);
+
+    expect(group.map((member) => [member.cell.id, member.depth])).toEqual([["bubble-0-1", 0]]);
   });
 
   it("направляет пузырь в более глубокую боковую ямку", () => {
@@ -159,39 +243,5 @@ describe("игровые правила", () => {
     expect(findRollTarget(board, 0, 1)).toEqual({ row: 1, col: 2 });
 
     randomSpy.mockRestore();
-  });
-
-  it("перемешивание не создаёт повторяющихся id клеток", () => {
-    const generated = generateBoard();
-    const board = applyGravity(popCells(generated, generated.flat().filter((_, index) => index % 3 === 0)));
-
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      const ids = shuffleBoard(board).flat().map((cell) => cell.id);
-
-      expect(new Set(ids).size).toBe(ids.length);
-    }
-  });
-
-  it("перемешивает цвета, сохраняя набор пузырей и опуская их вниз", () => {
-    const board = createBoard([
-      [1, 2],
-      ["rainbow", null],
-    ]);
-
-    const shuffledBoard = shuffleBoard(board);
-
-    expect(shuffledBoard.flat().map((cell) => cell.color).sort()).toEqual([1, 2, "rainbow", null].sort());
-
-    for (let col = 0; col < shuffledBoard[0].length; col += 1) {
-      let foundBubble = false;
-
-      for (const row of shuffledBoard) {
-        if (row[col].color !== null) {
-          foundBubble = true;
-        } else {
-          expect(foundBubble).toBe(false);
-        }
-      }
-    }
   });
 });

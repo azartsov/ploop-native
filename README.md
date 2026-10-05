@@ -1,24 +1,42 @@
 # Ploop
 
-`Ploop` is a calm, tactile Expo / React Native bubble-popping puzzle for Android and iOS. Hold connected bubbles to pop them, clear the field, and let the remaining bubbles settle into the bottom row.
+`Ploop` is a calm, tactile Expo / React Native bubble-popping puzzle for Android and iOS. Hold a bubble to pop its group, score points, chain combos, and clear a series of five fields.
 
 The project focuses on a gentle, low-pressure play loop: there is no failure state, unlimited undo, tactile feedback, soft sound design, and on-device records.
 
 ## Current Feature Set
 
-- mobile-first `10x10` bubble board with seven colors and rare rainbow bubbles
-- 400 ms hold gesture to confirm a move
+- mobile-first `10x10` bubble board with five colors and rare rainbow bubbles
+- 400 ms hold gesture to confirm a move; single bubbles can be popped too
+- while holding, the pressed bubble lights up and the highlight spreads across its whole group; rainbow bubbles in the group get a pulsing gold highlight
 - four-direction chain reactions with wave animation
 - rainbow bubble rules: rainbow bubbles extend matching chains or pop their neighbors when held directly
 - gravity with diagonal rolling into deeper side pits
 - bubble growth and colored splash effects before popping
-- undo and shuffle when no connected pairs remain
-- timer and tap counter
+- a field is cleared when no bubbles remain
+- undo that also restores the score and combo
+- scoring with floating point and combo popups (see below)
+- series of 5 fields with a colored score counter, the current field number, and the current average
 - Russian and English UI toggle
-- local top-10 leaderboard: fewer taps rank higher, then shorter completion time
+- local leaderboard of average points per field: top 5 of all time and top 5 of the current month
 - splash screen with animated background board and looped music
 - sound and haptic feedback controls
 - AsyncStorage persistence for records
+
+## Scoring
+
+- a single bubble gives `10` points
+- a group of `n >= 2` bubbles gives `(n - 1) * 100` points: `2` is `100`, `3` is `200`, `4` is `300`, and so on
+- popping groups of two or more bubbles in a row builds a combo; from the third group in a row each pop adds a combo bonus of `100`, then `200`, `300`, and so on
+- popping a single bubble resets the combo
+- the popup font grows with the points of the group; combo popups show `COMBO <n>` with the bonus
+
+## Series and Records
+
+- a series is `5` fields; the counter above the board shows the total points of the series
+- the average is the series total divided by the current field number
+- when the fifth field is cleared, the average points per field is stored as the series result
+- the records table keeps the best `5` results of all time and the best `5` of the current month
 
 ## Tech Stack
 

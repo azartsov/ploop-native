@@ -36,12 +36,12 @@ export function PloopLogo({ fontSize }: PloopLogoProps) {
   const bubbleSize = Math.round(fontSize * 0.66);
 
   return (
-    <View style={styles.row} accessibilityRole="header" accessibilityLabel="Ploop">
-      <Text style={[styles.letter, letterStyle, { color: BUBBLE_COLORS[0] }]}>P</Text>
-      <Text style={[styles.letter, letterStyle, { color: BUBBLE_COLORS[1] }]}>l</Text>
+    <View style={styles.row} accessibilityRole="header" accessibilityLabel="BLOOP">
+      <Text style={[styles.letter, letterStyle, { color: BUBBLE_COLORS[0] }]}>B</Text>
+      <Text style={[styles.letter, letterStyle, { color: BUBBLE_COLORS[1] }]}>L</Text>
       <LogoBubble size={bubbleSize} color={BUBBLE_COLORS[4]} />
       <LogoBubble size={bubbleSize} />
-      <Text style={[styles.letter, letterStyle, { color: BUBBLE_COLORS[6] }]}>p</Text>
+      <Text style={[styles.letter, letterStyle, { color: BUBBLE_COLORS[6] }]}>P</Text>
     </View>
   );
 }

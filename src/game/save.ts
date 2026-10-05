@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { parseRecords, type RecordEntry } from "./records";
 
-const RECORDS_KEY = "ploop-native:records:v1";
+const RECORDS_KEY = "ploop-native:records:v2";
 
 export async function loadRecords(): Promise<RecordEntry[]> {
   try {

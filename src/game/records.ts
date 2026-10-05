@@ -1,30 +1,60 @@
-export const MAX_RECORDS = 10;
+export const RECORDS_PER_LIST = 5;
 
 export type RecordEntry = {
   id: string;
-  taps: number;
-  timeMs: number;
+  // Среднее количество очков за поле в завершённой серии.
+  average: number;
+  playedAt: number;
+};
+
+export type RecordLists = {
+  allTime: RecordEntry[];
+  month: RecordEntry[];
 };
 
 export type AddRecordResult = {
+  // Хранятся только записи, которые попадают хотя бы в один из двух списков.
   records: RecordEntry[];
-  // Место нового результата в таблице (с нуля) или null, если он не попал в топ.
-  rank: number | null;
+  // Места нового результата (с нуля) или null, если он не попал в список.
+  allTimeRank: number | null;
+  monthRank: number | null;
 };
 
-// Меньше нажатий — выше; при равенстве выше тот, кто быстрее.
+// Больше очков — выше; при равенстве выше более старый результат.
 function compareRecords(a: RecordEntry, b: RecordEntry): number {
-  return a.taps - b.taps || a.timeMs - b.timeMs;
+  return b.average - a.average || a.playedAt - b.playedAt;
 }
 
-export function addRecord(records: RecordEntry[], entry: RecordEntry): AddRecordResult {
-  // Сортировка устойчива: при полном равенстве раньше стоит более старый результат.
-  const sorted = [...records, entry].sort(compareRecords);
-  const index = sorted.indexOf(entry);
+function isSameMonth(timestamp: number, now: number): boolean {
+  const date = new Date(timestamp);
+  const current = new Date(now);
+
+  return date.getFullYear() === current.getFullYear() && date.getMonth() === current.getMonth();
+}
+
+export function getRecordLists(records: RecordEntry[], now: number): RecordLists {
+  const sorted = [...records].sort(compareRecords);
 
   return {
-    records: sorted.slice(0, MAX_RECORDS),
-    rank: index < MAX_RECORDS ? index : null,
+    allTime: sorted.slice(0, RECORDS_PER_LIST),
+    month: sorted.filter((record) => isSameMonth(record.playedAt, now)).slice(0, RECORDS_PER_LIST),
+  };
+}
+
+function rankOf(list: RecordEntry[], entry: RecordEntry): number | null {
+  const index = list.indexOf(entry);
+
+  return index === -1 ? null : index;
+}
+
+export function addRecord(records: RecordEntry[], entry: RecordEntry, now: number = entry.playedAt): AddRecordResult {
+  const all = [...records, entry];
+  const lists = getRecordLists(all, now);
+
+  return {
+    records: all.filter((record) => lists.allTime.includes(record) || lists.month.includes(record)).sort(compareRecords),
+    allTimeRank: rankOf(lists.allTime, entry),
+    monthRank: rankOf(lists.month, entry),
   };
 }
 
@@ -37,10 +67,10 @@ function isRecordEntry(value: unknown): value is RecordEntry {
 
   return (
     typeof candidate.id === "string" &&
-    typeof candidate.taps === "number" &&
-    Number.isFinite(candidate.taps) &&
-    typeof candidate.timeMs === "number" &&
-    Number.isFinite(candidate.timeMs)
+    typeof candidate.average === "number" &&
+    Number.isFinite(candidate.average) &&
+    typeof candidate.playedAt === "number" &&
+    Number.isFinite(candidate.playedAt)
   );
 }
 
@@ -49,5 +79,5 @@ export function parseRecords(value: unknown): RecordEntry[] {
     return [];
   }
 
-  return value.filter(isRecordEntry).sort(compareRecords).slice(0, MAX_RECORDS);
+  return value.filter(isRecordEntry).sort(compareRecords);
 }

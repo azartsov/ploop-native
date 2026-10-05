@@ -14,11 +14,11 @@ export type PopEffectData = {
   id: string;
   row: number;
   col: number;
-  color: Exclude<BubbleColor, null>;
+  color: Exclude<BubbleColor, null | "stone">;
 };
 
 type PopEffectProps = {
-  color: Exclude<BubbleColor, null>;
+  color: Exclude<BubbleColor, null | "stone">;
   size: number;
 };
 

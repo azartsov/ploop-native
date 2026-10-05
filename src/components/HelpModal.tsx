@@ -1,25 +1,19 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import type { RecordEntry } from "../game/records";
 import type { Strings } from "../i18n/strings";
-import { RecordsTable } from "./RecordsTable";
 
-type RecordsModalProps = {
+type HelpModalProps = {
   visible: boolean;
-  records: RecordEntry[];
   strings: Strings;
   onClose: () => void;
 };
 
-export function RecordsModal({ visible, records, strings, onClose }: RecordsModalProps) {
+export function HelpModal({ visible, strings, onClose }: HelpModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <Pressable accessibilityLabel={strings.close} onPress={onClose} style={styles.backdrop}>
         <Pressable style={styles.card}>
-          <View>
-            <Text style={styles.title}>{strings.recordsTitle}</Text>
-            <Text style={styles.hint}>{strings.recordsHint}</Text>
-          </View>
-          <RecordsTable records={records} highlightId={null} strings={strings} />
+          <Text style={styles.title}>{strings.helpTitle}</Text>
+          <Text style={styles.description}>{strings.helpDescription}</Text>
           <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeText}>{strings.close}</Text>
           </Pressable>
@@ -50,10 +44,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
   },
-  hint: {
-    marginTop: 2,
-    color: "#66868A",
-    fontSize: 12,
+  description: {
+    color: "#42666B",
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: "center",
   },
   closeButton: {

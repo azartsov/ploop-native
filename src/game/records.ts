@@ -13,10 +13,10 @@ export type RecordLists = {
 };
 
 export type AddRecordResult = {
-  // Хранятся только записи, которые попадают хотя бы в один из двух списков.
+  // Полная история нужна для вычисления точного места ниже топ-5.
   records: RecordEntry[];
-  // Места нового результата (с нуля) или null, если он не попал в список.
-  allTimeRank: number | null;
+  // Места нового результата (с нуля).
+  allTimeRank: number;
   monthRank: number | null;
 };
 
@@ -41,20 +41,14 @@ export function getRecordLists(records: RecordEntry[], now: number): RecordLists
   };
 }
 
-function rankOf(list: RecordEntry[], entry: RecordEntry): number | null {
-  const index = list.indexOf(entry);
-
-  return index === -1 ? null : index;
-}
-
 export function addRecord(records: RecordEntry[], entry: RecordEntry, now: number = entry.playedAt): AddRecordResult {
-  const all = [...records, entry];
-  const lists = getRecordLists(all, now);
+  const all = [...records, entry].sort(compareRecords);
+  const month = all.filter((record) => isSameMonth(record.playedAt, now));
 
   return {
-    records: all.filter((record) => lists.allTime.includes(record) || lists.month.includes(record)).sort(compareRecords),
-    allTimeRank: rankOf(lists.allTime, entry),
-    monthRank: rankOf(lists.month, entry),
+    records: all,
+    allTimeRank: all.indexOf(entry),
+    monthRank: month.indexOf(entry) === -1 ? null : month.indexOf(entry),
   };
 }
 

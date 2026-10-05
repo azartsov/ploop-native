@@ -42,14 +42,14 @@ describe("таблица рекордов", () => {
     expect(getRecordLists(result.records, NOW).month).toEqual([]);
   });
 
-  it("не хранит записи, которые не нужны ни одному списку", () => {
+  it("сохраняет результат ниже топа для точного ранжирования в будущем", () => {
     const stored = Array.from({ length: 8 }, (_, index) => entry(`r${index}`, 100 + index * 100));
     const result = addRecord(stored, entry("weak", 50), NOW);
 
-    expect(result.records).toHaveLength(RECORDS_PER_LIST);
-    expect(result.allTimeRank).toBeNull();
-    expect(result.monthRank).toBeNull();
-    expect(result.records.some((item) => item.id === "weak")).toBe(false);
+    expect(result.records).toHaveLength(9);
+    expect(result.allTimeRank).toBe(8);
+    expect(result.monthRank).toBe(8);
+    expect(result.records.at(-1)?.id).toBe("weak");
   });
 
   it("отбрасывает повреждённые данные при чтении", () => {

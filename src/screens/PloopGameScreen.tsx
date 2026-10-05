@@ -56,7 +56,10 @@ type LastMoveBreakdown = {
 type SeriesResult = {
   total: number;
   average: number;
+  record: RecordEntry;
   recordId: string | null;
+  allTimeRank: number;
+  monthRank: number | null;
   newBest: boolean;
 };
 
@@ -323,7 +326,15 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
     const result = addRecord(stored, entry, now);
 
     setRecords(result.records);
-    setSeriesResult({ total, average, recordId: result.allTimeRank === null && result.monthRank === null ? null : entry.id, newBest: result.allTimeRank === 0 });
+    setSeriesResult({
+      total,
+      average,
+      record: entry,
+      recordId: entry.id,
+      allTimeRank: result.allTimeRank,
+      monthRank: result.monthRank,
+      newBest: result.allTimeRank === 0,
+    });
     setStatus("seriesCleared");
     await saveRecords(result.records);
   }
@@ -614,7 +625,12 @@ export function PloopGameScreen({ popPlayer, language, onToggleLanguage }: Ploop
             <Text style={styles.winStats}>{strings.seriesScore}: {seriesResult.total}</Text>
             <Text style={styles.winAverage}>{strings.averagePerField}: {seriesResult.average}</Text>
             <Text style={styles.recordsTitle}>{strings.recordsTitle}</Text>
-            <RecordsTable records={records} highlightId={seriesResult.recordId} strings={strings} />
+            <RecordsTable
+              records={records}
+              highlightId={seriesResult.recordId}
+              currentResult={{ record: seriesResult.record, allTimeRank: seriesResult.allTimeRank, monthRank: seriesResult.monthRank }}
+              strings={strings}
+            />
             <Pressable accessibilityRole="button" onPress={restart} style={[styles.controlButton, styles.winButton]}>
               <Text style={styles.controlText}>{strings.again}</Text>
             </Pressable>

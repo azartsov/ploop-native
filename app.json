@@ -31,7 +31,8 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-build-properties"
     ],
     "extra": {
       "eas": {
